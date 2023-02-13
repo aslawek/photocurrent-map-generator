@@ -4,12 +4,13 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 mpl.use('Qt5Agg'); #mpl.use('TkAgg')
 from functions.load_from_mpt import load_from_mpt_with_Analog
-from functions.filters import filter_by_voltage_value, integer_Analog, filter_by_Analog_borders, filter_by_Analog_borders_extra
-from functions.backgrounders import background_polynomial, background_interpolated
-from functions.plotter_CA import plotter_CA_with_Analog, plotter_CA_with_Analog_and_bckg
+from functions.filters import filter_by_voltage_value, integer_Analog, filter_by_Analog_borders, filter_by_Analog_borders_extra, assign_wavelengths
+from functions.backgrounders import background_polynomial, background_interpolated, background_poly_roll
+from functions.plotter_CA import plotter_CA_with_Analog, plotter_CA_with_Analog_and_bckg, plotter_CA_with_wavelengths
 from functions.plotter_CA import plotter_CA_with_bckg
 
 filename = './data/ITO_Zn_PzPz_Ar_map_-1.8V_+1V_0.2V_02_CA_C01.mpt'
+list_wavelengths = [320, 330, 340, 350, 360, 370, 380, 390, 400, 410, 420, 430, 440, 450, 460, 470, 480, 490, 500, 510, 520, 530, 540, 550, 560, 570, 580, 590, 600]
 
 # load data with Analog signals
 data = load_from_mpt_with_Analog(filename)
@@ -17,12 +18,13 @@ data = load_from_mpt_with_Analog(filename)
 data['control/V'] = data['control/V'].astype('float16')
 # modify Analog signal to integer (0 - dark, 1 - light)
 data = integer_Analog(data)
+# assign wavelengths to the cycles
+data_filtered = assign_wavelengths(data, list_wavelengths)
 
 # Method of background correction
 polynomial = False  # - type polynomial order or leave False
-interpolate = True  # - type True if you want some linear interpolation magic :)
-
-plotter_CA_with_Analog(data, filename)
+interpolate = False # - type True if you want some linear interpolation magic :)
+poly_roll = True    # - type True if you want MORE linear interpolation magic :)
 
 data_with_bckg = pd.DataFrame()
 
@@ -48,7 +50,13 @@ for voltage in data['control/V'].unique():
         # Plot!
         plotter_CA_with_bckg(data_filtered, data_to_fit, filename, voltage)
 
+    if poly_roll == True:
+        data_filtered, data_to_fit = background_poly_roll(data_filtered, list_wavelengths, poly_order=3, n_pts_fit=225, n_pts_retention=10)
+        plotter_CA_with_bckg(data_filtered, data_to_fit, filename, voltage)
+
     #data_with_bckg = data_with_bckg.append(data_filtered, ignore_index=True)
 
 #plotter_CA_with_Analog_and_bckg(data_with_bckg, filename)
 #plotter_CA_with_Analog(data_with_bckg, filename)
+#plotter_CA_with_Analog(data, filename)
+plotter_CA_with_wavelengths(data, filename)
