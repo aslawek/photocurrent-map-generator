@@ -2,14 +2,14 @@ import numpy as np
 
 def assign_wavelengths(data, list_wavelengths):
     # +1 to wavelength on any positive change in Analog signal (0 -> 1)
-    data['wavelength'] = np.floor(data['Analog IN 1/V'].gt(data['Analog IN 1/V'].shift()).cumsum()).astype('int')
+    data['wavelength/nm'] = np.floor(data['Analog IN 1/V'].gt(data['Analog IN 1/V'].shift()).cumsum()).astype('int')
     # modulo according to length of list_wavelengths
-    data['wavelength'] = ((data['wavelength'] - 1) % len(list_wavelengths)) + 1
+    data['wavelength/nm'] = ((data['wavelength/nm'] - 1) % len(list_wavelengths)) + 1
     # clear all points with Analog off
-    data.loc[(data['Analog IN 1/V'] == 0), 'wavelength'] = 0
+    data.loc[(data['Analog IN 1/V'] == 0), 'wavelength/nm'] = 0
     # replace integers with wavelength list items
     for i in range(len(list_wavelengths)):
-        data['wavelength'].replace({i+1: list_wavelengths[i]}, inplace=True)
+        data['wavelength/nm'].replace({i+1: list_wavelengths[i]}, inplace=True)
     return data
 
 def filter_by_voltage_value(data, filter_V):
